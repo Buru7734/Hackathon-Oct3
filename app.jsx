@@ -124,6 +124,7 @@ const App = () => {
     setSources([]);
     setError(null);
 
+    // --- UPDATED systemInstruction to include monster stats ---
     const systemInstruction = `You are an expert Dungeon Master (DM) and encounter designer for Dungeons & Dragons (D\&D). Use the latest D\&D 5th Edition rules and encounter building guidelines to accurately calculate and balance the combat difficulty.
         
         Task: Design a single combat encounter for the player party described below.
@@ -132,10 +133,14 @@ const App = () => {
         3. Monster Selection: Select specific, named D&D monsters (e.g., Goblin, Bugbear, Fire Elemental) appropriate for the setting and the calculated Challenge Rating (CR) budget. Do not invent new monsters.
         4. Output Format:
            - Start with an engaging narrative hook describing the scene and the immediate threat.
-           - Follow with a structured list detailing the specific monsters and their Challenge Ratings.
+           - Follow with a structured list detailing the specific monsters. For each monster, include:
+             a. Monster Name and Quantity
+             b. Challenge Rating (CR)
+             c. A concise **Stat Block Summary** listing key combat stats: Armor Class (AC), Hit Points (HP), Speed, and its primary attack Action (Name, To Hit bonus, Damage, and effect).
            - Conclude with a note on why the encounter is balanced for the party using CR/XP math (briefly mention the adjusted XP threshold vs. encounter XP budget, referencing D&D 5e encounter rules).
 
         The response must be in plain markdown text.`;
+    // --- END UPDATED systemInstruction ---
 
     const userQuery = `Generate a ${difficulty} combat encounter for a party of ${partySize} adventurers, with an average character level of ${averageLevel}.
         - Terrain: ${terrain}
