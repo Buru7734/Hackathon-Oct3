@@ -18,14 +18,6 @@
 - [Contributing](#contributing)
 - [License](#license)
 
----
-
-## Demo
-
-> _A live demo link can be placed here if deployed._
-
----
-
 ## Features
 
 - Generate D&D 5e encounters based on:
@@ -60,3 +52,9 @@
 git clone https://github.com/your-username/dnd-battle-master-ai.git
 cd dnd-battle-master-ai
 ```
+
+## Contributors
+
+Sara Mattina
+
+Daequan Sessíon
