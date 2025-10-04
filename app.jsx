@@ -84,6 +84,7 @@ const App = () => {
   const [difficulty, setDifficulty] = useState('Medium');
   const [terrain, setTerrain] = useState('Forest Ruin');
   const [flavor, setFlavor] = useState('A patrol guarding a magical artifact.');
+  const [numEnemies, setNumEnemies] = useState(5); // NEW STATE for desired enemy count
 
   const [encounterOutput, setEncounterOutput] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -124,13 +125,13 @@ const App = () => {
     setSources([]);
     setError(null);
 
-    // --- UPDATED systemInstruction to include monster stats and clean formatting ---
+    // --- UPDATED systemInstruction to explicitly include the enemy count constraint ---
     const systemInstruction = `You are an expert Dungeon Master (DM) and encounter designer for Dungeons & Dragons (D\&D). Use the latest D\&D 5th Edition rules and encounter building guidelines to accurately calculate and balance the combat difficulty.
         
         Task: Design a single combat encounter for the player party described below.
         1. Setting: Use the specified terrain.
         2. Difficulty: Strictly adhere to the requested difficulty level (${difficulty}).
-        3. Monster Selection: Select specific, named D&D monsters (e.g., Goblin, Bugbear, Fire Elemental) appropriate for the setting and the calculated Challenge Rating (CR) budget. Do not invent new monsters.
+        3. Monster Selection: Select specific, named D&D monsters (e.g., Goblin, Bugbear, Fire Elemental) appropriate for the setting and the calculated Challenge Rating (CR) budget. Do not invent new monsters. **The total quantity of all chosen monsters must equal the Desired Number of Enemies specified by the user.**
         4. Output Format:
            - Start with an engaging narrative hook describing the scene and the immediate threat.
            - Follow with a structured list detailing the specific monsters. For each monster, include:
@@ -144,7 +145,8 @@ const App = () => {
 
     const userQuery = `Generate a ${difficulty} combat encounter for a party of ${partySize} adventurers, with an average character level of ${averageLevel}.
         - Terrain: ${terrain}
-        - Flavor/Context: ${flavor}`;
+        - Flavor/Context: ${flavor}
+        - Desired Number of Enemies (Total Quantity): ${numEnemies}`; // NEW ENEMY COUNT IN QUERY
 
     const payload = {
       contents: [{ parts: [{ text: userQuery }] }],
@@ -192,7 +194,7 @@ const App = () => {
     } finally {
       setIsLoading(false);
     }
-  }, [partySize, averageLevel, difficulty, terrain, flavor, fetchWithBackoff]);
+  }, [partySize, averageLevel, difficulty, terrain, flavor, numEnemies, fetchWithBackoff]); // Added numEnemies to dependencies
 
   const RenderMarkdown = ({ content }) => {
     if (!content) return null;
@@ -315,6 +317,23 @@ const App = () => {
                   max="20"
                   value={averageLevel}
                   onChange={(e) => setAverageLevel(Math.max(1, Math.min(20, parseInt(e.target.value) || 1)))}
+                  className="w-full p-3 bg-gray-700 text-white border border-gray-600 rounded-lg focus:ring-yellow-500 focus:border-yellow-500 transition duration-150"
+                  required
+                />
+              </div>
+
+              {/* Desired Number of Enemies (NEW FIELD) */}
+              <div>
+                <label htmlFor="numEnemies" className="block text-sm font-medium text-gray-300 mb-1">
+                  Desired Number of Enemies (Total)
+                </label>
+                <input
+                  id="numEnemies"
+                  type="number"
+                  min="1"
+                  max="20"
+                  value={numEnemies}
+                  onChange={(e) => setNumEnemies(Math.max(1, Math.min(20, parseInt(e.target.value) || 1)))}
                   className="w-full p-3 bg-gray-700 text-white border border-gray-600 rounded-lg focus:ring-yellow-500 focus:border-yellow-500 transition duration-150"
                   required
                 />
