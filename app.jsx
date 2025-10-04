@@ -80,6 +80,22 @@ const pcmToWav = (pcmData, sampleRate) => {
   return new Blob([view], { type: "audio/wav" });
 };
 
+// Helper function to parse inline markdown (bolding)
+const parseInlineMarkdown = (text) => {
+  if (!text) return text;
+  // Split the text by the bolding delimiter (**) while keeping the delimiters
+  const parts = text.split(/(\*\*.*?\*\*)/g);
+  
+  return parts.map((part, i) => {
+      if (part.startsWith('**') && part.endsWith('**')) {
+          // Found a bolded section, remove the delimiters and wrap in <strong>
+          return <strong key={i}>{part.substring(2, part.length - 2)}</strong>;
+      }
+      return part;
+  });
+};
+
+
 // The main application component
 const App = () => {
   // --- Firebase State and Initialization ---
@@ -139,7 +155,7 @@ const App = () => {
   const [difficulty, setDifficulty] = useState("Medium");
   const [terrain, setTerrain] = useState("Forest Ruin");
   const [flavor, setFlavor] = useState("A patrol guarding a magical artifact.");
-  const [voiceStyle, setVoiceStyle] = useState("Dramatic"); // New state for voice selection
+  const [voiceStyle, setVoiceStyle] = useState("Dramatic");
 
   const [encounterOutput, setEncounterOutput] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -183,7 +199,6 @@ const App = () => {
       if (e) e.preventDefault();
       if (isLoading) return;
 
-      // Stop any currently playing audio
       if (audioPlayer) audioPlayer.pause();
 
       setIsLoading(true);
@@ -191,6 +206,7 @@ const App = () => {
       setSources([]);
       setError(null);
 
+      // --- System Instruction (Kept consistent with clean stat block request) ---
       const systemInstruction = `You are an expert Dungeon Master (DM) and encounter designer for Dungeons & Dragons (D\&D). Use the latest D\&D 5th Edition rules and encounter building guidelines to accurately calculate and balance the combat difficulty.
         
         Task: Design a single combat encounter for the player party described below.
@@ -200,12 +216,13 @@ const App = () => {
         4. Output Format:
            - Start with an engaging narrative hook describing the scene and the immediate threat.
            - Follow with a structured list detailing the specific monsters. For each monster, include:
-             a. Monster Name and Quantity
-             b. Challenge Rating (CR)
-             c. A concise **Stat Block Summary** listing key combat stats: Armor Class (AC), Hit Points (HP), Speed, and its primary attack Action (Name, To Hit bonus, Damage, and effect).
+             a. **Monster Name** and Quantity (Use markdown bolding **only** for the name).
+             b. Challenge Rating (CR).
+             c. A concise Stat Block Summary listing key combat stats: Armor Class (AC), Hit Points (HP), Speed, and its primary attack Action (Name, To Hit bonus, Damage, and effect). Use a simple, un-emphasized bullet list for these stats to ensure clean formatting.
            - Conclude with a note on why the encounter is balanced for the party using CR/XP math (briefly mention the adjusted XP threshold vs. encounter XP budget, referencing D&D 5e encounter rules).
 
         The response must be in plain markdown text.`;
+      // --- End System Instruction ---
 
       const userQuery = `Generate a ${difficulty} combat encounter for a party of ${partySize} adventurers, with an average character level of ${averageLevel}.
         - Terrain: ${terrain}
@@ -329,19 +346,16 @@ const App = () => {
 
     const narrativeHook = encounterOutput.split("\n\n")[0];
 
-    // --- New logic for dynamic voice and prompt ---
     let textPrompt;
     let voiceName;
 
     if (voiceStyle === "Monotone") {
       textPrompt = `Say the following text quickly and in a flat, monotone voice: ${narrativeHook}`;
-      voiceName = "Schedar"; // An "even" voice
+      voiceName = "Schedar";
     } else {
-      // 'Dramatic' is the default
       textPrompt = `Say in a dramatic, storytelling voice suitable for a Dungeon Master: ${narrativeHook}`;
-      voiceName = "Charon"; // An "informative" voice
+      voiceName = "Charon";
     }
-    // --- End new logic ---
 
     const payload = {
       contents: [
@@ -395,8 +409,9 @@ const App = () => {
       );
       setIsSpeaking(false);
     }
-  }, [encounterOutput, isSpeaking, audioPlayer, fetchWithBackoff, voiceStyle]); // Added voiceStyle to dependencies
+  }, [encounterOutput, isSpeaking, audioPlayer, fetchWithBackoff, voiceStyle]);
 
+  // --- REFACTORED RenderMarkdown component ---
   const RenderMarkdown = ({ content }) => {
     if (!content) return null;
     const lines = content.split("\n");
@@ -426,29 +441,28 @@ const App = () => {
               </h3>
             );
           }
+          // Handle list items with inline bolding
           if (line.startsWith("* ") || line.startsWith("- ")) {
             return (
-              <li key={index} className="list-disc ml-6">
-                {line.substring(2).trim()}
+              <li key={index} className="list-disc ml-6 mt-1">
+                {parseInlineMarkdown(line.substring(2).trim())}
               </li>
             );
           }
-          if (line.startsWith("**") && line.endsWith("**")) {
+          // Handle general paragraphs with inline bolding
+          if (line.trim().length > 0) {
             return (
-              <p key={index} className="font-bold">
-                {line.replaceAll("**", "")}
+              <p key={index} className="mb-2">
+                {parseInlineMarkdown(line)}
               </p>
             );
           }
-          return (
-            <p key={index} className="mb-2">
-              {line}
-            </p>
-          );
+          return null;
         })}
       </div>
     );
   };
+  // --- END REFACTORED RenderMarkdown component ---
 
   return (
     <div className="min-h-screen bg-gray-900 p-4 sm:p-8 font-sans">
@@ -592,7 +606,6 @@ const App = () => {
                 />
               </div>
 
-              {/* --- New Voice Style Selector --- */}
               <div>
                 <label
                   htmlFor="voiceStyle"
@@ -610,7 +623,6 @@ const App = () => {
                   <option value="Monotone">Monotone (Fast)</option>
                 </select>
               </div>
-              {/* --- End New Voice Style Selector --- */}
 
               <button
                 type="submit"
