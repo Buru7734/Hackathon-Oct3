@@ -3,7 +3,7 @@ import { initializeApp } from 'firebase/app';
 import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from 'firebase/auth';
 import { getFirestore } from 'firebase/firestore';
 
-// --- Configuration and Constants ---
+// --- Configuration and Constants for Canvas Environment ---
 
 const MODEL_NAME = 'gemini-2.5-flash-preview-05-20';
 const MAX_RETRIES = 5;
@@ -14,7 +14,6 @@ const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial
 
 // The API key is intentionally left empty here. In the Canvas environment, 
 // the platform automatically provides the API key in the fetch call if it is not set.
-// If running externally, this should be handled by a build tool or user injection.
 const API_KEY = ""; 
 const API_URL = `https://generativelanguage.googleapis.com/v1beta/models/${MODEL_NAME}:generateContent?key=${API_KEY}`;
 
