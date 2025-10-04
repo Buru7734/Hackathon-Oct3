@@ -124,7 +124,7 @@ const App = () => {
     setSources([]);
     setError(null);
 
-    // --- UPDATED systemInstruction to include monster stats ---
+    // --- UPDATED systemInstruction to include monster stats and clean formatting ---
     const systemInstruction = `You are an expert Dungeon Master (DM) and encounter designer for Dungeons & Dragons (D\&D). Use the latest D\&D 5th Edition rules and encounter building guidelines to accurately calculate and balance the combat difficulty.
         
         Task: Design a single combat encounter for the player party described below.
@@ -134,9 +134,9 @@ const App = () => {
         4. Output Format:
            - Start with an engaging narrative hook describing the scene and the immediate threat.
            - Follow with a structured list detailing the specific monsters. For each monster, include:
-             a. Monster Name and Quantity
+             a. Monster Name and Quantity (bold the monster's name)
              b. Challenge Rating (CR)
-             c. A concise **Stat Block Summary** listing key combat stats: Armor Class (AC), Hit Points (HP), Speed, and its primary attack Action (Name, To Hit bonus, Damage, and effect).
+             c. A concise Stat Block Summary listing key combat stats. Use a simple, un-emphasized bullet list for these stats to ensure clean formatting. Include: Armor Class (AC), Hit Points (HP), Speed, and its primary attack Action (Name, To Hit bonus, Damage, and effect). Example bullet point: "AC: 14 (Natural Armor), HP: 45 (6d8+18), Speed: 30 ft., Attack: Greatsword (+5 to hit, 1d10+3 slashing)"
            - Conclude with a note on why the encounter is balanced for the party using CR/XP math (briefly mention the adjusted XP threshold vs. encounter XP budget, referencing D&D 5e encounter rules).
 
         The response must be in plain markdown text.`;
@@ -207,14 +207,39 @@ const App = () => {
           if (line.startsWith('### ')) {
             return <h3 key={index} className="text-lg font-semibold text-yellow-300 mt-3 mb-1">{line.substring(4)}</h3>;
           }
+          
+          // List item handling (Monsters and Stat Blocks)
           if (line.startsWith('* ') || line.startsWith('- ')) {
-            return <li key={index} className="list-disc ml-6">{line.substring(2).trim()}</li>;
+            // Check if the line contains a link (to avoid rendering text that looks like markdown links)
+            let itemContent = line.substring(2).trim();
+            
+            // Basic bold rendering for list items (e.g., monster name)
+            const parts = itemContent.split(/(\*\*.*?\*\*)/g).map((part, i) => {
+                if (part.startsWith('**') && part.endsWith('**')) {
+                    return <strong key={i}>{part.substring(2, part.length - 2)}</strong>;
+                }
+                return part;
+            });
+
+            return <li key={index} className="list-disc ml-6 mt-1">{parts}</li>;
           }
-          if (line.startsWith('**') && line.endsWith('**')) {
-            return <p key={index} className="font-bold">{line.replaceAll('**', '')}</p>;
+
+          // General bold handling for paragraphs
+          if (line.includes('**')) {
+            const parts = line.split(/(\*\*.*?\*\*)/g).map((part, i) => {
+                if (part.startsWith('**') && part.endsWith('**')) {
+                    return <strong key={i}>{part.substring(2, part.length - 2)}</strong>;
+                }
+                return part;
+            });
+            return <p key={index} className="mb-2">{parts}</p>;
           }
+
           // Default paragraph
-          return <p key={index} className="mb-2">{line}</p>;
+          if (line.trim().length > 0) {
+              return <p key={index} className="mb-2">{line}</p>;
+          }
+          return null; // Ignore empty lines
         })}
       </div>
     );
